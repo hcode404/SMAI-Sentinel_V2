@@ -1,904 +1,717 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMAI Sentinel v2.1 - Localhost Connect</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fonts: Rubik & JetBrains Mono -->
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Cytoscape.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
-    
-    <style>
-        :root {
-            --bg-deep: #0d1117;
-            --cyber-cyan: #00d4aa;
-            --cyber-blue: #38bdf8;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>SMAI Sentinel Command - v2.1 Localhost</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 
-        body {
-            font-family: 'Rubik', sans-serif;
-            background-color: var(--bg-deep);
-            color: #e6edf3;
-            overflow: hidden;
-            height: 100vh;
-        }
+  <style>
+    :root {
+      --g:      #00d4aa;   /* teal primary */
+      --b:      #38bdf8;   /* sky blue */
+      --r:      #fb7185;   /* rose */
+      --y:      #fbbf24;   /* amber */
+      --p:      #a78bfa;   /* violet */
+      --bg:     #0d1117;
+      --bg2:    #161b22;
+      --card:   #1c2333;
+      --side:   #161b22;
+      --border: rgba(48,54,61,1);
+      --glow:   rgba(0,212,170,0.15);
+      --text:   #e6edf3;
+      --text2:  #8b949e;
+      --muted:  #484f58;
+    }
 
-        .mono { font-family: 'JetBrains Mono', monospace; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Glassmorphism Classes */
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-        }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rubik', sans-serif;
+      direction: rtl;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-        .glass-dark {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 30%, rgba(0,212,170,.04) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 90% 70%, rgba(56,189,248,.04) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 50% 10%, rgba(167,139,250,.03) 0%, transparent 60%);
+    }
 
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,212,170,.25); border-radius: 3px; }
 
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease-out forwards;
-        }
+    @keyframes fadeUp      { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:none } }
+    @keyframes fadeIn      { from { opacity:0 } to { opacity:1 } }
+    @keyframes slideRight  { from { opacity:0; transform:translateX(-12px) } to { opacity:1; transform:none } }
+    @keyframes popIn       { from { opacity:0; transform:scale(.92) } to { opacity:1; transform:scale(1) } }
+    @keyframes pulse       { 0%,100% { opacity:1 } 50% { opacity:.4 } }
+    @keyframes spin        { to { transform:rotate(360deg) } }
 
-        .tab-content.active {
-            display: block;
-        }
+    /* ═══ LOGIN SCREEN ══════════════════════════════════ */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 999;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+    }
+    #bg-canvas { position: absolute; inset: 0; }
 
-        /* Sidebar Styling */
-        .sidebar-item {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
+    .login-card {
+      position: relative; z-index: 1;
+      background: rgba(22,27,34,.92);
+      border: 1px solid rgba(0,212,170,.25);
+      border-radius: 20px; padding: 36px 40px;
+      width: 440px; max-width: 95vw;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
+      animation: popIn .45s cubic-bezier(.16,1,.3,1);
+    }
 
-        .sidebar-item.active {
-            background: rgba(56, 189, 248, 0.15);
-            color: var(--cyber-cyan);
-            border-right: 4px solid var(--cyber-cyan);
-        }
+    .login-logo { text-align: center; margin-bottom: 24px; }
+    .login-shield {
+      width: 64px; height: 64px; margin: 0 auto 12px;
+      background: linear-gradient(135deg, rgba(0,212,170,.15), rgba(56,189,248,.1));
+      border: 1.5px solid rgba(0,212,170,.4); border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-title { font-family: 'JetBrains Mono'; font-size: 20px; font-weight: 700; color: var(--g); letter-spacing: 1px; }
 
-        .sidebar-item:hover:not(.active) {
-            background: rgba(255, 255, 255, 0.08);
-        }
+    .auth-tabs { display: flex; background: rgba(255,255,255,.04); border-radius: 10px; padding: 3px; margin-bottom: 22px; gap: 3px; }
+    .auth-tab {
+      flex: 1; padding: 9px; border: none; border-radius: 8px;
+      font-family: 'Rubik'; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all .2s; background: transparent; color: var(--text2);
+    }
+    .auth-tab.active { background: rgba(0,212,170,.15); color: var(--g); }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--cyber-blue); }
+    .login-err {
+      background: rgba(251,113,133,.1); border: 1px solid rgba(251,113,133,.3);
+      color: var(--r); padding: 10px 14px; border-radius: 8px;
+      font-size: 13px; margin-bottom: 14px; display: none;
+    }
 
-        /* Cytoscape Container */
-        #nexus-container {
-            width: 100%;
-            height: 600px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 12px;
-        }
+    /* ═══ INPUTS & BUTTONS ══════════════════════════════ */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono'; }
+    .input-wrap { position: relative; }
+    .input-wrap .icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 15px; height: 15px; }
+    input, textarea, select {
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); padding: 10px 36px 10px 12px;
+      font-family: 'Rubik'; font-size: 13px; width: 100%; outline: none;
+    }
+    input:focus { border-color: var(--g); }
+    .btn { padding: 8px 16px; border-radius: 8px; font-family: 'Rubik'; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .18s; border: 1px solid; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-submit {
+      width: 100%; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      background: linear-gradient(135deg, rgba(0,212,170,.2), rgba(56,189,248,.12));
+      border: 1px solid rgba(0,212,170,.4); color: var(--g); cursor: pointer;
+    }
 
-        /* Verified Badge (Blue Check) */
-        .verified-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: #1d9bf0;
-            color: white;
-            border-radius: 50%;
-            width: 14px;
-            height: 14px;
-            font-size: 8px;
-            margin-right: 4px;
-            box-shadow: 0 0 5px rgba(29, 155, 240, 0.5);
-        }
+    /* ═══ APP LAYOUT ════════════════════════════════════ */
+    #app { display: none; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
 
-        /* Toast Notifications */
-        #toast-container {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 9999;
-        }
+    header {
+      background: rgba(22,27,34,.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+      height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+    }
+    .logo-text { font-family:'JetBrains Mono'; font-size:15px; font-weight:700; color:var(--g); }
 
-        /* Modal Structure */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 99999;
-            align-items: center;
-            justify-content: center;
-        }
+    aside { width: 220px; background: var(--side); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 10px; overflow-y: auto; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 13px; }
+    .nav-item.active { background: rgba(0,212,170,.1); color: var(--g); border-right: 2px solid var(--g); }
+    .nav-badge { background: var(--r); color: #fff; border-radius: 10px; padding: 1px 6px; font-size: 10px; font-family: 'JetBrains Mono'; }
 
-        #global-loader {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10000;
-        }
+    main { flex: 1; position: relative; overflow: hidden; }
+    .view { display: none; flex-direction: column; gap: 16px; position: absolute; inset: 0; padding: 20px; overflow-y: auto; }
+    .view.active { display: flex; animation: fadeIn .3s ease; }
 
-        /* Action Pulse */
-        .pulse-red {
-            animation: pulse-red 2s infinite;
-        }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; }
+    .stat-card.s-g { border-bottom: 2px solid var(--g); }
+    .stat-card.s-b { border-bottom: 2px solid var(--b); }
+    .stat-card.s-r { border-bottom: 2px solid var(--r); }
+    .stat-card.s-y { border-bottom: 2px solid var(--y); }
 
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-    </style>
+    .case-item { padding: 14px 16px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; background: var(--card); margin-bottom: 8px; }
+    .case-item:hover { border-color: rgba(0,212,170,.2); background: rgba(0,212,170,.04); }
+
+    .badge { padding: 2px 9px; border-radius: 5px; font-size: 11px; font-family: 'JetBrains Mono'; border: 1px solid; display: inline-flex; align-items: center; gap: 4px; }
+    .risk-critical { color: var(--r); border-color: rgba(251,113,133,.4); background: rgba(251,113,133,.08); }
+    .badge-verified { color: #38bdf8; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 500; backdrop-filter: blur(4px); }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: var(--bg2); border: 1px solid rgba(0,212,170,.2); border-radius: 16px; padding: 26px; width: 480px; max-width: 95vw; }
+
+    #toast { position: fixed; bottom: 68px; left: 20px; z-index: 9999; background: var(--bg2); border: 1px solid var(--g); border-radius: 12px; padding: 14px 18px; display: none; }
+
+    #log-bar { height: 50px; background: rgba(13,17,23,.98); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; padding: 0 16px; }
+    .log-line { font-family: 'JetBrains Mono'; font-size: 11px; }
+
+    #cy { width: 100%; height: 100%; min-height: 400px; }
+    .msg-bubble { padding: 10px 14px; border-radius: 12px; max-width: 75%; font-size: 13px; line-height: 1.5; }
+    .msg-bubble-mine { background: rgba(0,212,170,.1); border: 1px solid rgba(0,212,170,.2); align-self: flex-end; }
+    .msg-bubble-their { background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.15); align-self: flex-start; }
+  </style>
 </head>
-<body class="flex">
+<body>
 
-    <!-- Global Loader (Sync Indicator) -->
-    <div id="global-loader">
-        <div class="glass px-4 py-2 rounded-full border border-cyan-500/30 flex items-center gap-3 shadow-lg">
-            <div class="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-            <span class="text-xs font-bold text-cyan-400 tracking-tighter mono">SYNCING WITH LOCALHOST...</span>
-        </div>
+<!-- ANNOUNCEMENT BANNER -->
+<div id="ann-banner" style="position:fixed;top:0;left:0;right:0;z-index:3000;display:none;
+  background:linear-gradient(90deg,rgba(0,212,170,.95),rgba(56,189,248,.85));
+  backdrop-filter:blur(8px);padding:14px 24px;box-shadow:0 4px 24px rgba(0,212,170,.3);">
+  <div style="display:flex;align-items:center;gap:14px;max-width:900px;margin:0 auto;">
+    <span style="font-size:22px;">📢</span>
+    <div style="flex:1;">
+      <div id="ann-banner-title" style="font-weight:700;color:#000;font-size:15px;"></div>
+      <div id="ann-banner-body" style="font-size:12px;color:rgba(0,0,0,.75);margin-top:2px;"></div>
     </div>
+    <button onclick="dismissBanner()" style="background:rgba(0,0,0,.15);border:none;cursor:pointer;color:#000;width:28px;height:28px;border-radius:50%;">✕</button>
+  </div>
+</div>
 
-    <!-- Global Modal (Cases & Bans) -->
-    <div id="global-modal" class="modal-overlay" onclick="if(event.target === this) closeModal()">
-        <div class="glass max-w-2xl w-full p-8 rounded-3xl relative border border-white/10 shadow-2xl" onclick="event.stopPropagation()">
-            <button onclick="closeModal()" class="absolute top-6 left-6 text-gray-500 hover:text-white transition-colors">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-            <div id="modal-content">
-                <!-- Content injected via JS -->
-            </div>
-        </div>
+<div id="login-screen">
+  <canvas id="bg-canvas"></canvas>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-shield"><i data-lucide="shield" style="color:var(--g);"></i></div>
+      <div class="login-title">SMAI SENTINEL</div>
     </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">כניסה</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">הרשמה</button>
+    </div>
+    <div class="login-err" id="auth-err"></div>
+    <div id="form-login">
+      <div class="field"><label>אימייל</label><input id="l-email" type="email" placeholder="user@domain.com"/></div>
+      <div class="field" style="margin-top:10px;"><label>סיסמה</label><input id="l-pass" type="password" placeholder="••••••••"/></div>
+      <button class="btn-submit" style="margin-top:20px;" onclick="doLogin()">כניסה למערכת ›</button>
+    </div>
+    <div id="form-register" style="display:none;">
+      <div class="field"><label>שם תצוגה</label><input id="r-name" type="text" placeholder="השם שלך"/></div>
+      <div class="field" style="margin-top:10px;"><label>אימייל</label><input id="r-email" type="email" placeholder="user@domain.com"/></div>
+      <div class="field" style="margin-top:10px;"><label>סיסמה</label><input id="r-pass" type="password" placeholder="לפחות 6 תווים"/></div>
+      <button class="btn-submit" style="margin-top:20px;" onclick="doRegister()">הרשמה ›</button>
+    </div>
+  </div>
+</div>
 
-    <!-- Sidebar Navigation -->
-    <aside class="w-72 glass h-screen flex flex-col z-50 border-l border-white/10 shadow-2xl">
-        <div class="p-6 border-b border-white/10 flex items-center gap-3 bg-black/10">
-            <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                <i data-lucide="shield-alert" class="text-white w-6 h-6"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight tracking-tight">SENTINEL <span class="text-cyan-400">v2.1</span></h1>
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest">SMAI Intelligence Hub</p>
-            </div>
-        </div>
+<div id="toast">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <i data-lucide="bell" style="width:16px;height:16px;color:var(--g);"></i>
+    <div>
+      <div id="toast-title" style="font-size:13px;font-weight:600;"></div>
+      <div id="toast-body" style="font-size:12px;color:var(--text2);"></div>
+    </div>
+  </div>
+</div>
 
-        <nav class="flex-1 overflow-y-auto py-4 space-y-1">
-            <button onclick="switchTab('dashboard')" class="sidebar-item active w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                <span>לוח בקרה</span>
-            </button>
-            <button onclick="switchTab('cases')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="briefcase" class="w-5 h-5"></i>
-                <span>תיקי חקירה</span>
-            </button>
-            <button onclick="switchTab('nexus')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="share-2" class="w-5 h-5"></i>
-                <span>גרף קשרים (Nexus)</span>
-            </button>
-            <button onclick="switchTab('osint')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="search" class="w-5 h-5"></i>
-                <span>כלי סריקה (OSINT)</span>
-            </button>
-            
-            <div class="px-6 py-2 text-[11px] text-gray-600 font-bold uppercase mt-4">תקשורת</div>
-            <button onclick="switchTab('chat')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="messages-square" class="w-5 h-5"></i>
-                <span>צ'אט ראשי</span>
-            </button>
-            <button onclick="switchTab('messages')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="mail" class="w-5 h-5"></i>
-                <span>הודעות פרטיות</span>
-            </button>
-            <button onclick="switchTab('news')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="rss" class="w-5 h-5"></i>
-                <span>חדשות מערכת</span>
-            </button>
-            <button onclick="switchTab('inbox')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="inbox" class="w-5 h-5"></i>
-                <span>תיבת דואר</span>
-            </button>
+<div id="app">
+  <header>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="logo-text">SMAI SENTINEL</span>
+      <span id="server-status-badge" class="badge" style="font-size:9px; border-color: var(--muted);">OFFLINE</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div id="hdr-user" style="display:flex;align-items:center;gap:8px;font-size:13px;"></div>
+      <span style="font-family:'JetBrains Mono';font-size:11px;color:var(--text2);" id="clock"></span>
+      <button class="btn btn-r" style="font-size:11px;padding:6px 12px;" onclick="doLogout()">יציאה</button>
+    </div>
+  </header>
 
-            <div class="px-6 py-2 text-[11px] text-gray-600 font-bold uppercase mt-4">ניהול פאנל</div>
-            <button onclick="switchTab('users')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="users" class="w-5 h-5"></i>
-                <span>ניהול משתמשים</span>
-            </button>
-            <button onclick="switchTab('settings')" class="sidebar-item w-full flex items-center px-6 py-3 gap-4 text-sm font-medium">
-                <i data-lucide="settings" class="w-5 h-5"></i>
-                <span>הגדרות פאנל</span>
-            </button>
-        </nav>
-
-        <!-- User Profile -->
-        <div class="p-4 border-t border-white/10 bg-black/20">
-            <div id="user-profile-card" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-cyan-900 border border-cyan-500/30 flex items-center justify-center overflow-hidden">
-                    <img id="my-avatar" src="https://ui-avatars.com/api/?name=Admin&background=0D1117&color=00d4aa" alt="Avatar">
-                </div>
-                <div class="flex-1 overflow-hidden">
-                    <div class="flex items-center gap-1">
-                        <span id="my-username" class="font-medium text-sm truncate">טוען...</span>
-                        <span id="my-verified-badge"></span>
-                    </div>
-                    <div id="my-role" class="text-[10px] text-cyan-400 mono">@operator</div>
-                </div>
-                <button onclick="handleLogout()" class="text-gray-500 hover:text-white transition-colors">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </div>
+  <div style="display:flex;flex:1;overflow:hidden;">
+    <aside>
+      <div class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard"><i data-lucide="layout-dashboard"></i>לוח בקרה</div>
+      <div class="nav-item" onclick="showView('cases')" id="nav-cases"><i data-lucide="folder-open"></i>תיקי חקירה</div>
+      <div class="nav-item" onclick="showView('nexus')" id="nav-nexus"><i data-lucide="git-branch"></i>גרף קשרים</div>
+      <div class="nav-item" onclick="showView('chat')" id="nav-chat"><i data-lucide="message-square"></i>צ'אט ראשי</div>
+      <div class="nav-item" onclick="showView('inbox')" id="nav-inbox"><i data-lucide="inbox"></i>תיבת דואר <span class="nav-badge" id="inbox-badge" style="display:none;">0</span></div>
+      <div class="nav-item" onclick="showView('news')" id="nav-news"><i data-lucide="newspaper"></i>חדשות</div>
+      <div class="nav-item" onclick="showView('users')" id="nav-users" style="display:none;"><i data-lucide="users"></i>ניהול משתמשים</div>
+      <div class="nav-item" onclick="showView('settings')" id="nav-settings"><i data-lucide="settings"></i>הגדרות</div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 h-screen overflow-hidden flex flex-col relative">
-        <!-- Top Header -->
-        <header class="h-16 border-b border-white/10 flex items-center justify-between px-8 glass-dark z-40">
-            <div class="flex items-center gap-4">
-                <h2 id="current-tab-title" class="text-lg font-bold text-white">לוח בקרה</h2>
-                <div class="h-4 w-[1px] bg-white/10 mx-2"></div>
-                <div id="server-status" class="flex items-center gap-2 px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-[10px] text-yellow-400 mono uppercase tracking-tighter cursor-pointer hover:bg-yellow-500/20 transition-all" onclick="retryConnection()">
-                    <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
-                    Connecting to Localhost...
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="mono text-xs text-gray-400 bg-white/5 px-3 py-1.5 rounded border border-white/10">
-                    <span id="server-time">00:00:00</span> UTC
-                </div>
-            </div>
-        </header>
-
-        <!-- Tab Content Viewport -->
-        <div id="content-viewport" class="flex-1 overflow-y-auto p-8 relative">
-            
-            <!-- Dashboard Tab -->
-            <section id="tab-dashboard" class="tab-content active space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6" id="stats-grid">
-                    <!-- Stats pull from /api/stats -->
-                </div>
-                <div class="grid grid-cols-3 gap-6">
-                    <div class="col-span-2 glass p-6 rounded-2xl">
-                        <h3 class="font-bold mb-4 flex items-center gap-2">
-                            <i data-lucide="activity" class="w-5 h-5 text-cyan-400"></i>
-                            פעילות רשת אחרונה
-                        </h3>
-                        <div id="activity-log" class="space-y-4">
-                            <div class="text-center py-8 text-gray-500 italic text-sm">ממתין לסנכרון נתונים...</div>
-                        </div>
-                    </div>
-                    <div class="glass p-6 rounded-2xl">
-                        <h3 class="font-bold mb-4 flex items-center gap-2">
-                            <i data-lucide="cpu" class="w-5 h-5 text-blue-400"></i>
-                            מדדי חומרה
-                        </h3>
-                        <div id="system-metrics" class="space-y-6">
-                            <!-- Injected Metrics -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Cases Tab -->
-            <section id="tab-cases" class="tab-content">
-                <div class="space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-white">מאגר תיקי חקירה (Cases)</h3>
-                        <button class="px-4 py-2 bg-cyan-500 text-black font-bold rounded-lg text-sm hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/20">
-                            + פתיחת תיק חדש
-                        </button>
-                    </div>
-                    <div class="glass overflow-hidden rounded-2xl">
-                        <table class="w-full text-right">
-                            <thead class="bg-white/5 text-xs text-gray-400 uppercase tracking-wider border-b border-white/10">
-                                <tr>
-                                    <th class="px-6 py-4 font-bold">מזהה</th>
-                                    <th class="px-6 py-4 font-bold">שם יעד</th>
-                                    <th class="px-6 py-4 font-bold">סיווג</th>
-                                    <th class="px-6 py-4 font-bold">סטטוס</th>
-                                    <th class="px-6 py-4 font-bold">פעולות</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cases-table-body" class="divide-y divide-white/5 text-sm">
-                                <!-- Dynamic Cases -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Nexus Graph Tab -->
-            <section id="tab-nexus" class="tab-content h-full">
-                <div class="glass p-6 rounded-2xl h-full flex flex-col">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-bold">Nexus Graph Visualizer</h3>
-                        <button onclick="renderNexusGraph()" class="px-4 py-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs hover:bg-cyan-500/30 transition-all">
-                            רענון רשת
-                        </button>
-                    </div>
-                    <div id="nexus-container" class="flex-1 glass-dark border border-white/10 rounded-xl overflow-hidden relative"></div>
-                </div>
-            </section>
-
-            <!-- Operational Chat Tab -->
-            <section id="tab-chat" class="tab-content h-[calc(100vh-140px)]">
-                <div class="glass rounded-2xl h-full flex overflow-hidden">
-                    <div class="w-64 border-l border-white/10 flex flex-col bg-black/10">
-                        <div class="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
-                            <span class="text-xs font-bold text-gray-500 uppercase">ערוצים</span>
-                            <span id="chat-online-count" class="text-[10px] bg-cyan-500/20 text-cyan-400 px-2 rounded-full">...</span>
-                        </div>
-                        <div class="p-4 flex items-center gap-3 bg-cyan-500/10 border-r-2 border-cyan-500 cursor-pointer">
-                            <div class="w-10 h-10 bg-cyan-900 rounded-full flex items-center justify-center font-bold">#</div>
-                            <div>
-                                <div class="text-sm font-bold">צ'אט מבצעי ראשי</div>
-                                <div class="text-[10px] text-cyan-400 animate-pulse">חי</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex-1 flex flex-col glass-dark">
-                        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
-                            <!-- Messages -->
-                        </div>
-                        <form onsubmit="handleChatSubmit(event)" class="p-4 border-t border-white/10 bg-black/20 flex gap-3">
-                            <input id="chat-input" type="text" placeholder="הקלד הודעה מבצעית..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 transition-all">
-                            <button type="submit" class="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center text-black hover:bg-cyan-400 transition-all">
-                                <i data-lucide="send" class="w-5 h-5"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Users Tab -->
-            <section id="tab-users" class="tab-content">
-                <div class="space-y-6">
-                    <h3 class="text-xl font-bold text-white">ניהול משתמשים וסיווגים</h3>
-                    <div class="glass rounded-2xl overflow-hidden">
-                        <table class="w-full text-right">
-                            <thead class="bg-white/5 text-xs text-gray-400 uppercase tracking-wider border-b border-white/10">
-                                <tr>
-                                    <th class="px-6 py-4 font-bold">משתמש</th>
-                                    <th class="px-6 py-4 font-bold">דרגה</th>
-                                    <th class="px-6 py-4 font-bold">סטטוס</th>
-                                    <th class="px-6 py-4 font-bold">פעולות</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-table-body" class="divide-y divide-white/5 text-sm">
-                                <!-- Dynamic Users -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- OSINT Tab -->
-            <section id="tab-osint" class="tab-content">
-                <div class="glass p-12 text-center rounded-3xl border-dashed border-2 border-white/10">
-                    <i data-lucide="search" class="w-16 h-16 text-cyan-500 mx-auto mb-4 animate-pulse"></i>
-                    <h3 class="text-2xl font-bold">כלי סריקה (OSINT)</h3>
-                    <p class="text-gray-400 mt-2">מתחבר למאגרי מידע חיצוניים... אנא המתן לסיום הסנכרון הראשוני.</p>
-                </div>
-            </section>
-
-            <!-- News Tab -->
-            <section id="tab-news" class="tab-content space-y-6">
-                <h3 class="text-xl font-bold">עדכוני מערכת אחרונים</h3>
-                <div id="news-container" class="space-y-4">
-                    <!-- News items -->
-                </div>
-            </section>
-
-            <!-- Placeholders for Inbox, Messages & Settings -->
-            <section id="tab-messages" class="tab-content"><div class="glass p-12 text-center rounded-3xl"><h3>תיבת הודעות פרטיות</h3><p class="text-gray-500">הערוץ מוצפן מקצה לקצה (P2P).</p></div></section>
-            <section id="tab-inbox" class="tab-content"><div class="glass p-12 text-center rounded-3xl"><h3>תיבת דואר (Secure Inbox)</h3><p class="text-gray-500">אין הודעות חדשות.</p></div></section>
-            <section id="tab-settings" class="tab-content"><div class="glass p-12 text-center rounded-3xl"><h3>הגדרות פאנל</h3><p class="text-gray-500">ניהול API Keys והרשאות מערכת.</p></div></section>
-
+    <main>
+      <section id="view-dashboard" class="view active">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+          <div class="stat-card s-b"><span>סה"כ תיקים</span><span id="dash-total" style="font-size:24px;font-weight:700;color:var(--b);">0</span></div>
+          <div class="stat-card s-g"><span>פעילים</span><span id="dash-active" style="font-size:24px;font-weight:700;color:var(--g);">0</span></div>
+          <div class="stat-card s-r"><span>קריטיים</span><span id="dash-crit" style="font-size:24px;font-weight:700;color:var(--r);">0</span></div>
+          <div class="stat-card s-y"><span>הודעות חדשות</span><span id="dash-msgs" style="font-size:24px;font-weight:700;color:var(--y);">0</span></div>
         </div>
+        <div class="card" style="margin-top:20px;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">תיקים אחרונים</div>
+          <div id="dash-recent"></div>
+        </div>
+      </section>
+
+      <section id="view-cases" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h2 style="font-size:18px;font-weight:600;">תיקי חקירה</h2>
+          <button class="btn btn-g" onclick="openModal('new-case')">+ תיק חדש</button>
+        </div>
+        <div id="cases-list"></div>
+      </section>
+
+      <section id="view-nexus" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h2 style="font-size:18px;font-weight:600;">גרף קשרים - The Nexus</h2>
+            <button class="btn btn-b" onclick="reloadGraph()">רענון גרף</button>
+        </div>
+        <div class="card" style="flex:1;padding:0;overflow:hidden;"><div id="cy"></div></div>
+      </section>
+
+      <section id="view-chat" class="view" style="padding:0;">
+        <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px;" id="chat-feed"></div>
+        <div style="padding:15px; border-top:1px solid var(--border); display:flex; gap:10px;">
+          <input id="chat-input" type="text" placeholder="כתוב הודעה..." onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="btn btn-g" onclick="sendChat()">שלח</button>
+        </div>
+      </section>
+
+      <section id="view-inbox" class="view">
+        <h2 style="font-size:18px;font-weight:600;margin-bottom:10px;">תיבת דואר</h2>
+        <div id="inbox-list"></div>
+      </section>
+
+      <section id="view-users" class="view">
+        <h2 style="font-size:18px;font-weight:600;margin-bottom:10px;">ניהול משתמשים</h2>
+        <div id="users-list"></div>
+      </section>
+
+      <section id="view-news" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h2 style="font-size:18px;font-weight:600;">חדשות מערכת</h2>
+          <button id="btn-new-ann" class="btn btn-g" onclick="openModal('new-ann')" style="display:none;">פרסם הודעה</button>
+        </div>
+        <div id="news-list"></div>
+      </section>
+
+      <section id="view-settings" class="view">
+          <h2 style="font-size:18px;font-weight:600;margin-bottom:10px;">הגדרות</h2>
+          <div class="card">
+              <label style="font-size:12px; color:var(--text2);">כתובת שרת Backend</label>
+              <div style="display:flex;gap:10px;margin-top:5px;">
+                  <input id="api-url-in" value="http://localhost:8000"/>
+                  <button class="btn btn-g" onclick="saveApiUrl()">שמור</button>
+              </div>
+          </div>
+      </section>
     </main>
+  </div>
 
-    <div id="toast-container"></div>
+  <div id="log-bar">
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--g);" class="dot-g"></div>
+    <div id="log-feed" style="flex:1;font-size:11px;font-family:'JetBrains Mono';display:flex;gap:15px;overflow:hidden;"></div>
+    <span style="font-size:10px;color:var(--muted);">SENTINEL v2.1</span>
+  </div>
+</div>
 
-    <script>
-        /**
-         * SMAI SENTINEL CORE JS v2.1
-         * חיבור מלא ל-LOCAL HOST וניהול Real-Time Polling
-         */
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-new-case">
+  <div class="modal-box">
+    <h3 style="margin-bottom:15px;">פתיחת תיק חדש</h3>
+    <div class="field"><label>שם יעד</label><input id="nc-name" type="text"/></div>
+    <div class="field" style="margin-top:10px;"><label>פלטפורמה</label><select id="nc-plat"><option value="roblox">Roblox</option><option value="discord">Discord</option></select></div>
+    <div class="field" style="margin-top:10px;"><label>רמת סיכון</label><select id="nc-risk"><option value="low">נמוך</option><option value="medium">בינוני</option><option value="high">גבוה</option><option value="critical">קריטי</option></select></div>
+    <div class="field" style="margin-top:10px;"><label>הערות</label><textarea id="nc-notes"></textarea></div>
+    <button class="btn-submit" style="margin-top:20px;" onclick="createCase()">צור תיק</button>
+    <button class="btn" style="width:100%;margin-top:10px;border:none;" onclick="closeModal('new-case')">ביטול</button>
+  </div>
+</div>
 
-        const API_BASE = "http://localhost:8000";
-        const state = {
-            activeTab: 'dashboard',
-            currentUser: null,
-            lastMsgId: 0,
-            pollingIntervals: {},
-            demoMode: false // מצב תצוגה שמופעל כשהשרת לא זמין
-        };
+<div class="modal-overlay" id="modal-new-ann">
+    <div class="modal-box">
+      <h3>📢 הודעת מערכת חדשה</h3>
+      <div class="field"><label>כותרת</label><input id="ann-title" type="text"/></div>
+      <div class="field" style="margin-top:10px;"><label>תוכן</label><textarea id="ann-content" rows="4"></textarea></div>
+      <button class="btn-submit" style="margin-top:20px;" onclick="createAnnouncement()">פרסם</button>
+      <button class="btn" style="width:100%;margin-top:10px;border:none;" onclick="closeModal('new-ann')">סגירה</button>
+    </div>
+</div>
 
-        // --- Network Layer המתוקן ---
-        async function api(path, options = {}) {
-            // אם אנחנו במצב דמו, נחזיר נתונים ריקים כדי למנוע שגיאות
-            if (state.demoMode && path !== '/api/me') return null;
+<script>
+// --- Global State ---
+let API_BASE = localStorage.getItem('api_base') || 'http://localhost:8000';
+let S = { user: null, token: null, lastAnnAt: null, activeTab: 'dashboard' };
 
-            toggleLoader(true);
-            const token = localStorage.getItem('sentinel_token');
-            
-            const config = {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': token ? `Bearer ${token}` : '',
-                    ...options.headers
-                },
-                mode: 'cors',
-                // הוספת Timeout כדי למנוע המתנה אינסופית
-                signal: AbortSignal.timeout(5000) 
-            };
+// --- Core API Wrapper ---
+async function api(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('smai_token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            try {
-                const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
-                const cleanPath = path.startsWith('/') ? path : '/' + path;
-                const url = cleanBase + cleanPath;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 8000);
 
-                const response = await fetch(url, config);
-                
-                if (response.status === 401) {
-                    handleLogout();
-                    throw new Error("פג תוקף הטוקן.");
-                }
+    try {
+        const url = API_BASE.replace(/\/$/, '') + '/' + path.replace(/^\//, '');
+        const response = await fetch(url, { ...opts, headers, signal: controller.signal });
+        clearTimeout(id);
 
-                if (!response.ok) throw new Error(`Status: ${response.status}`);
-                
-                toggleLoader(false);
-                updateServerStatus(true);
-                return await response.json();
-            } catch (err) {
-                toggleLoader(false);
-                updateServerStatus(false);
-                
-                // טיפול מפורט בשגיאות Fetch
-                let detailedError = "שגיאת חיבור לשרת המקומי.";
-                
-                if (err.name === 'TypeError' || err.name === 'AbortError') {
-                    // בדיקה אם מדובר ב-Mixed Content
-                    if (window.location.protocol === 'https:' && API_BASE.startsWith('http:')) {
-                        detailedError = "חסימת אבטחה: הדפדפן חוסם בקשת HTTP מתוך HTTPS. וודא ששרת ה-Python תומך ב-SSL או השתמש בדפדפן המאפשר Mixed Content.";
-                    } else {
-                        detailedError = `לא ניתן להגיע לשרת בכתובת ${API_BASE}. וודא שהשרת רץ ושהגדרת CORS ב-Python.`;
-                    }
-                    state.demoMode = true; // מעבר זמני למצב תצוגה כדי למנוע הצפת שגיאות
-                }
-
-                console.error("[SENTINEL NETWORK ERROR]", err);
-                showToast(detailedError, 'error');
+        if (response.status === 401 || response.status === 403) {
+            if (!['/api/auth/login', '/api/auth/register'].includes(path)) {
+                doLogout();
                 return null;
             }
         }
 
-        // --- Navigation & Tab Rendering ---
-        async function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
-            
-            const target = document.getElementById(`tab-${tabId}`);
-            if (target) target.classList.add('active');
-            
-            const btn = Array.from(document.querySelectorAll('.sidebar-item')).find(b => b.getAttribute('onclick').includes(tabId));
-            if (btn) btn.classList.add('active');
-
-            document.getElementById('current-tab-title').textContent = getTabLabel(tabId);
-            state.activeTab = tabId;
-
-            // רענון תוכן
-            refreshTabContent(tabId);
-            lucide.createIcons();
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+            throw new Error(errData.detail || `Server Error ${response.status}`);
         }
 
-        async function refreshTabContent(tabId) {
-            try {
-                switch (tabId) {
-                    case 'dashboard': await renderDashboard(); break;
-                    case 'cases': await renderCases(); break;
-                    case 'users': await renderUsers(); break;
-                    case 'nexus': await renderNexusGraph(); break;
-                    case 'news': await renderNews(); break;
-                    case 'chat': await renderChat(); break;
-                }
-            } catch (e) {
-                console.error(`Error rendering tab ${tabId}:`, e);
-            }
+        updateStatus(true);
+        return await response.json();
+    } catch (err) {
+        updateStatus(false);
+        if (err.name === 'AbortError') showToast('שגיאה', 'הבקשה לשרת ארכה זמן רב מדי');
+        else if (err.message.includes('Failed to fetch')) {
+            console.error("Network Error:", err);
+            showToast('שגיאת חיבור', 'לא ניתן להגיע לשרת בכתובת ' + API_BASE);
         }
+        throw err;
+    }
+}
 
-        // --- Render Functions ---
+function updateStatus(online) {
+    const b = document.getElementById('server-status-badge');
+    if (online) {
+        b.textContent = 'ONLINE'; b.style.color = 'var(--g)'; b.style.borderColor = 'var(--g)';
+    } else {
+        b.textContent = 'OFFLINE'; b.style.color = 'var(--r)'; b.style.borderColor = 'var(--r)';
+    }
+}
 
-        async function renderDashboard() {
-            const data = await api('/api/stats');
-            const grid = document.getElementById('stats-grid');
-            
-            if (!data) {
-                grid.innerHTML = `<div class="col-span-4 glass p-4 text-center text-gray-500 italic">נתוני לוח בקרה אינם זמינים (שרת מנותק).</div>`;
-                return;
-            }
-
-            grid.innerHTML = `
-                <div class="glass p-6 rounded-2xl border-b-2 border-cyan-500/50">
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider">סריקות פעילות</h3>
-                    <div class="text-3xl font-bold mono mt-1">${data.active_scans || 0}</div>
-                </div>
-                <div class="glass p-6 rounded-2xl border-b-2 border-blue-500/50">
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider">תיקי חקירה</h3>
-                    <div class="text-3xl font-bold mono mt-1">${data.total_cases || 0}</div>
-                </div>
-                <div class="glass p-6 rounded-2xl border-b-2 border-purple-500/50">
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider">איומים שזוהו</h3>
-                    <div class="text-3xl font-bold mono mt-1">${data.threats || 0}</div>
-                </div>
-                <div class="glass p-6 rounded-2xl border-b-2 border-orange-500/50">
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider">משתמשים מחוברים</h3>
-                    <div class="text-3xl font-bold mono mt-1">${data.online_users || 0}</div>
-                </div>
-            `;
-
-            document.getElementById('activity-log').innerHTML = (data.recent_activity || []).map(act => `
-                <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 hover:border-cyan-500/30 transition-all group">
-                    <div class="flex items-center gap-4">
-                        <div class="w-2 h-2 ${act.type === 'alert' ? 'bg-red-500' : 'bg-cyan-400'} rounded-full animate-pulse"></div>
-                        <div class="text-sm font-medium">${act.message}</div>
-                    </div>
-                    <span class="text-[10px] text-gray-600 mono">${act.time}</span>
-                </div>
-            `).join('') || '<div class="text-center py-4 text-gray-500">אין פעילות לסנכרון.</div>';
-
-            document.getElementById('system-metrics').innerHTML = `
-                <div>
-                    <div class="flex justify-between text-xs mb-2"><span class="text-gray-400 font-bold uppercase">CPU Load</span><span class="mono text-cyan-400">${data.cpu || 0}%</span></div>
-                    <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-cyan-500" style="width: ${data.cpu || 0}%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-xs mb-2"><span class="text-gray-400 font-bold uppercase">RAM Usage</span><span class="mono text-blue-400">${data.ram || 0}%</span></div>
-                    <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-blue-500" style="width: ${data.ram || 0}%"></div></div>
-                </div>
-            `;
+// --- Auth Functions ---
+async function doLogin() {
+    const email = document.getElementById('l-email').value;
+    const password = document.getElementById('l-pass').value;
+    try {
+        const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        if (res) {
+            localStorage.setItem('smai_token', res.token);
+            S.token = res.token; S.user = res.user;
+            startApp();
         }
+    } catch (e) {
+        document.getElementById('auth-err').textContent = e.message;
+        document.getElementById('auth-err').style.display = 'block';
+    }
+}
 
-        async function renderCases() {
-            const cases = await api('/api/cases');
-            const tbody = document.getElementById('cases-table-body');
-            tbody.innerHTML = '';
-
-            if (cases && Array.isArray(cases)) {
-                cases.forEach(c => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-white/5 transition-colors group border-b border-white/5';
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 mono text-cyan-400 font-bold">#${c.case_id}</td>
-                        <td class="px-6 py-4 font-medium text-white">${c.target_name}</td>
-                        <td class="px-6 py-4"><span class="px-2 py-0.5 border rounded text-[10px] ${getSeverityClass(c.severity)}">${c.severity}</span></td>
-                        <td class="px-6 py-4 text-gray-400">${c.status}</td>
-                        <td class="px-6 py-4">
-                            <button onclick="viewCaseDetails(${c.id})" class="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-lg">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500 italic">לא נמצאו תיקי חקירה (שרת מנותק).</td></tr>';
-            }
-            lucide.createIcons();
+async function doRegister() {
+    const display_name = document.getElementById('r-name').value;
+    const email = document.getElementById('r-email').value;
+    const password = document.getElementById('r-pass').value;
+    try {
+        const res = await api('/api/auth/register', { method: 'POST', body: JSON.stringify({ display_name, email, password }) });
+        if (res) {
+            localStorage.setItem('smai_token', res.token);
+            S.token = res.token; S.user = res.user;
+            startApp();
         }
+    } catch (e) {
+        document.getElementById('auth-err').textContent = e.message;
+        document.getElementById('auth-err').style.display = 'block';
+    }
+}
 
-        async function viewCaseDetails(id) {
-            const data = await api(`/api/cases/${id}`);
-            if (!data) return;
+function doLogout() {
+    localStorage.removeItem('smai_token');
+    location.reload();
+}
 
-            const content = document.getElementById('modal-content');
-            content.innerHTML = `
-                <div class="space-y-6">
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-cyan-500/10 rounded-xl text-cyan-400 border border-cyan-500/20"><i data-lucide="briefcase" class="w-8 h-8"></i></div>
-                        <div><h3 class="text-2xl font-bold">${data.target_name}</h3><p class="text-xs text-gray-500 mono tracking-widest">SENTINEL_CASE_ID: #${data.case_id}</p></div>
-                    </div>
-                    <div class="glass p-6 rounded-2xl border border-white/10 bg-black/30">
-                        <h4 class="font-bold mb-3 text-cyan-400 text-sm flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> תיאור ומידע מודיעיני:</h4>
-                        <p class="text-sm text-gray-300 leading-relaxed">${data.description || 'אין מידע נוסף בתיק זה.'}</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 text-center">
-                        <div class="p-4 bg-white/5 rounded-xl border border-white/5"><span class="block text-[10px] text-gray-500 uppercase font-bold mb-1">חוקר מבצעי</span><span class="font-bold text-blue-400">@${data.investigator}</span></div>
-                        <div class="p-4 bg-white/5 rounded-xl border border-white/5"><span class="block text-[10px] text-gray-500 uppercase font-bold mb-1">רמת סיווג</span><span class="font-bold ${getSeverityClass(data.severity, 'text')}">${data.severity}</span></div>
-                    </div>
-                    <button onclick="closeModal()" class="w-full py-4 bg-white/5 text-white border border-white/10 rounded-2xl hover:bg-white/10 font-bold transition-all">סגור תצוגה</button>
-                </div>
-            `;
-            document.getElementById('global-modal').style.display = 'flex';
-            lucide.createIcons();
-        }
+async function tryAutoLogin() {
+    const token = localStorage.getItem('smai_token');
+    if (!token) return;
+    try {
+        S.token = token;
+        const user = await api('/api/auth/me');
+        if (user) { S.user = user; startApp(); }
+    } catch (e) { localStorage.removeItem('smai_token'); }
+}
 
-        // --- Nexus Graph (Visualizer) ---
-        let cy = null;
-        async function renderNexusGraph() {
-            const data = await api('/api/nexus');
-            if (!data) {
-                document.getElementById('nexus-container').innerHTML = '<div class="flex items-center justify-center h-full text-gray-500 italic">נתוני הגרף אינם זמינים (שרת מנותק).</div>';
-                return;
-            }
+// --- App Flow ---
+function startApp() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    
+    const u = S.user;
+    const v = u.verified ? '<span class="badge-verified">✔</span>' : '';
+    document.getElementById('hdr-user').innerHTML = `${v} <span>${u.display_name}</span> <span style="color:var(--muted); font-size:10px;">[${u.role}]</span>`;
+    
+    if (u.role === 'admin' || u.role === 'team') {
+        document.getElementById('nav-users').style.display = 'flex';
+        document.getElementById('btn-new-ann').style.display = 'block';
+    }
 
-            if (cy) cy.destroy();
-            cy = cytoscape({
-                container: document.getElementById('nexus-container'),
-                elements: data.elements,
-                style: [
-                    {
-                        selector: 'node',
-                        style: {
-                            'label': 'data(label)',
-                            'background-color': '#38bdf8',
-                            'color': '#fff',
-                            'font-size': '10px',
-                            'text-valign': 'center',
-                            'text-halign': 'center',
-                            'width': '50px',
-                            'height': '50px',
-                            'border-width': '2px',
-                            'border-color': '#00d4aa',
-                            'text-outline-width': '2px',
-                            'text-outline-color': '#0d1117'
-                        }
-                    },
-                    {
-                        selector: 'edge',
-                        style: {
-                            'width': 2,
-                            'line-color': 'rgba(255,255,255,0.1)',
-                            'target-arrow-shape': 'triangle',
-                            'curve-style': 'bezier',
-                            'label': 'data(label)',
-                            'font-size': '8px',
-                            'color': '#666'
-                        }
-                    }
-                ],
-                layout: { name: 'cose', animate: true, padding: 30 }
-            });
-        }
+    renderDashboard();
+    pollData();
+    setInterval(pollData, 5000);
+    lucide.createIcons();
+}
 
-        // --- Operational Chat ---
-        async function renderChat() {
-            const data = await api(`/api/messages?since=${state.lastMsgId}`);
-            if (!data) return;
+function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+    S.activeTab = name;
+    
+    if (name === 'cases') renderCases();
+    if (name === 'users') renderUsers();
+    if (name === 'nexus') initNexus();
+    if (name === 'news') renderNews();
+    if (name === 'inbox') renderInbox();
+    if (name === 'chat') renderChat();
+    lucide.createIcons();
+}
 
-            const container = document.getElementById('chat-messages');
-            if (data.messages && data.messages.length > 0) {
-                data.messages.forEach(msg => {
-                    if (document.getElementById(`msg-${msg.id}`)) return;
-                    const div = document.createElement('div');
-                    div.id = `msg-${msg.id}`;
-                    div.className = `flex flex-col ${msg.username === state.currentUser?.username ? 'items-end' : 'items-start'} animate-fadeIn`;
-                    const verifiedIcon = msg.verified === 1 ? '<span class="verified-badge"><i data-lucide="check"></i></span>' : '';
-                    div.innerHTML = `
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs font-bold text-blue-400">${msg.username}</span>
-                            ${verifiedIcon}
-                            <span class="text-[9px] text-gray-600 mono">${msg.time}</span>
-                        </div>
-                        <div class="bg-white/5 border border-white/10 p-3 rounded-2xl max-w-[80%] text-sm text-white shadow-lg">
-                            ${msg.content}
-                        </div>
-                    `;
-                    container.appendChild(div);
-                    state.lastMsgId = Math.max(state.lastMsgId, msg.id);
-                });
-                container.scrollTop = container.scrollHeight;
-                lucide.createIcons();
-            }
-            document.getElementById('chat-online-count').textContent = `${data.online_count || 0} מחוברים`;
-        }
-
-        async function handleChatSubmit(e) {
-            e.preventDefault();
-            const input = document.getElementById('chat-input');
-            const msg = input.value.trim();
-            if (!msg) return;
-
-            const res = await api('/api/messages', {
-                method: 'POST',
-                body: JSON.stringify({ content: msg })
-            });
-            if (res) {
-                input.value = '';
-                await renderChat();
-            }
-        }
-
-        // --- Users Management ---
-        async function renderUsers() {
-            const users = await api('/api/users');
-            const tbody = document.getElementById('users-table-body');
-            tbody.innerHTML = '';
-
-            if (users && Array.isArray(users)) {
-                users.forEach(u => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-white/5 transition-colors border-b border-white/5';
-                    const verifiedIcon = u.verified === 1 ? '<span class="verified-badge"><i data-lucide="check"></i></span>' : '';
-                    tr.innerHTML = `
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <span class="font-medium">${u.username}</span>
-                                ${verifiedIcon}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 mono text-xs uppercase text-gray-500">${u.role}</td>
-                        <td class="px-6 py-4">
-                            <span class="${u.status === 'banned' ? 'text-red-400 bg-red-400/10 px-2 py-0.5 rounded' : 'text-green-400 bg-green-400/10 px-2 py-0.5 rounded'} text-[10px] font-bold uppercase">
-                                ${u.status === 'banned' ? 'חסום' : 'פעיל'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 flex gap-2">
-                            <button onclick="openBanModal(${u.id}, '${u.username}')" class="p-1.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all">
-                                <i data-lucide="user-x" class="w-4 h-4"></i>
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500 italic">לא ניתן לטעון רשימת משתמשים (שרת מנותק).</td></tr>';
-            }
-            lucide.createIcons();
-        }
-
-        function openBanModal(id, username) {
-            const content = document.getElementById('modal-content');
-            content.innerHTML = `
-                <div class="space-y-6 text-center">
-                    <div class="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto border border-red-500/20 pulse-red">
-                        <i data-lucide="shield-off" class="w-10 h-10"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-2xl font-bold">חסימת משתמש: ${username}</h3>
-                        <p class="text-gray-400 mt-2">פעולה זו תמנע גישה למערכת ותבטל את כל הטוקנים הפעילים.</p>
-                    </div>
-                    <div class="flex gap-4">
-                        <button onclick="handleBan(${id})" class="flex-1 py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/30">בצע חסימה</button>
-                        <button onclick="closeModal()" class="flex-1 py-4 bg-white/5 text-white border border-white/10 rounded-2xl hover:bg-white/10 transition-all">ביטול</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById('global-modal').style.display = 'flex';
-            lucide.createIcons();
-        }
-
-        async function handleBan(id) {
-            const res = await api(`/api/users/${id}/ban`, { method: 'POST' });
-            if (res) {
-                showToast("המשתמש הועבר לסטטוס BANNED", 'success');
-                closeModal();
-                await renderUsers();
-            }
-        }
-
-        // --- News System ---
-        async function renderNews() {
-            const news = await api('/api/news');
-            const container = document.getElementById('news-container');
-            if (news && news.length > 0) {
-                container.innerHTML = news.map(n => `
-                    <div class="glass p-5 rounded-2xl border-r-4 border-cyan-500 bg-white/5 hover:bg-white/10 transition-all">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-white text-lg">${n.title}</h4>
-                            <span class="text-[10px] text-gray-500 mono font-bold bg-white/5 px-2 py-1 rounded">${n.date}</span>
-                        </div>
-                        <p class="text-sm text-gray-400 leading-relaxed">${n.content}</p>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = '<p class="text-center text-gray-500 italic py-12">אין עדכונים (שרת מנותק).</p>';
-            }
-        }
-
-        // --- Utilities & Handlers ---
-
-        function toggleLoader(show) { document.getElementById('global-loader').style.display = show ? 'block' : 'none'; }
-        function closeModal() { document.getElementById('global-modal').style.display = 'none'; }
-        function handleLogout() { localStorage.removeItem('sentinel_token'); window.location.reload(); }
+// --- Data Fetching ---
+async function renderDashboard() {
+    try {
+        const cases = await api('/api/cases');
+        document.getElementById('dash-total').textContent = cases.length;
+        document.getElementById('dash-active').textContent = cases.filter(c => c.status === 'active').length;
+        document.getElementById('dash-crit').textContent = cases.filter(c => c.risk_level === 'critical').length;
         
-        function retryConnection() {
-            state.demoMode = false;
-            showToast("מנסה להתחבר מחדש ל-Localhost...", 'info');
-            init();
-        }
+        const recent = document.getElementById('dash-recent');
+        recent.innerHTML = cases.slice(0, 3).map(c => `
+            <div class="case-item" onclick="showView('cases')">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${c.name}</strong>
+                    <span class="badge" style="border-color:var(--muted);">${c.platform}</span>
+                </div>
+            </div>
+        `).join('') || 'אין תיקים להצגה';
+    } catch(e) {}
+}
 
-        function getSeverityClass(s, mode = 'bg') {
-            const map = { 'Critical': 'red', 'High': 'orange', 'Medium': 'yellow', 'Low': 'blue' };
-            const c = map[s] || 'gray';
-            return mode === 'bg' ? `border-${c}-500/20 text-${c}-400 bg-${c}-500/10` : `text-${c}-400`;
-        }
+async function renderCases() {
+    const cases = await api('/api/cases');
+    const el = document.getElementById('cases-list');
+    el.innerHTML = cases.map(c => `
+        <div class="case-item">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>${c.name}</strong>
+                    <div style="font-size:11px; color:var(--text2);">${c.notes || ''}</div>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span class="badge risk-${c.risk_level}">${c.risk_level}</span>
+                    <span class="badge" style="border-color:var(--muted);">${c.platform}</span>
+                </div>
+            </div>
+        </div>
+    `).join('') || 'אין תיקים במאגר';
+}
 
-        function getTabLabel(id) {
-            const labels = { dashboard: 'לוח בקרה', cases: 'תיקי חקירה', nexus: 'גרף קשרים', osint: 'כלי סריקה', chat: 'צ\'אט מבצעי', users: 'ניהול משתמשים', news: 'חדשות מערכת', settings: 'הגדרות פאנל', messages: 'הודעות פרטיות', inbox: 'תיבת דואר' };
-            return labels[id] || 'מערכת';
-        }
+async function renderUsers() {
+    const users = await api('/api/users');
+    const el = document.getElementById('users-list');
+    el.innerHTML = users.map(u => `
+        <div class="card" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <strong>${u.display_name}</strong> ${u.verified ? '✔' : ''}
+                <div style="font-size:11px; color:var(--text2);">${u.email} | ${u.role}</div>
+            </div>
+            ${u.blocked ? '<span style="color:var(--r); font-size:12px;">חסום</span>' : ''}
+        </div>
+    `).join('');
+}
 
-        function updateServerStatus(online) {
-            const badge = document.getElementById('server-status');
-            if (online) {
-                badge.className = "flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-[10px] text-green-400 mono uppercase tracking-tighter cursor-pointer hover:bg-green-500/20 transition-all";
-                badge.innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Localhost Online';
-            } else {
-                badge.className = "flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-[10px] text-red-400 mono uppercase tracking-tighter cursor-pointer hover:bg-red-500/20 transition-all pulse-red";
-                badge.innerHTML = '<span class="w-2 h-2 bg-red-500 rounded-full"></span> Server Offline (Click to Retry)';
+async function renderNews() {
+    const anns = await api('/api/announcements');
+    const el = document.getElementById('news-list');
+    el.innerHTML = anns.map(a => `
+        <div class="card" style="margin-bottom:10px; border-right: 3px solid var(--g);">
+            <div style="font-weight:700;">${a.title}</div>
+            <div style="font-size:13px; margin-top:5px;">${a.content}</div>
+            <div style="font-size:10px; color:var(--muted); margin-top:8px;">${a.created_at.split('T')[0]} | ע"י ${a.creator_name}</div>
+        </div>
+    `).join('') || 'אין חדשות';
+}
+
+async function renderInbox() {
+    const msgs = await api('/api/inbox');
+    const el = document.getElementById('inbox-list');
+    el.innerHTML = msgs.map(m => `
+        <div class="card" style="margin-bottom:10px; opacity: ${m.is_read ? 0.6 : 1};">
+            <div style="font-weight:700;">${m.title}</div>
+            <div style="font-size:12px;">${m.content}</div>
+        </div>
+    `).join('') || 'התיבה ריקה';
+}
+
+// --- Chat ---
+async function renderChat() {
+    const msgs = await api('/api/chat');
+    const el = document.getElementById('chat-feed');
+    const atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 100;
+    
+    el.innerHTML = msgs.map(m => {
+        const isMe = m.sender_id === S.user.id;
+        return `
+            <div style="display:flex; flex-direction:column; align-items: ${isMe ? 'flex-end' : 'flex-start'};">
+                <div style="font-size:10px; color:var(--text2); margin-bottom:2px;">${m.sender_name} | ${m.created_at.split('T')[1].slice(0,5)}</div>
+                <div class="msg-bubble ${isMe ? 'msg-bubble-mine' : 'msg-bubble-their'}">${m.content}</div>
+            </div>
+        `;
+    }).join('');
+    
+    if (atBottom) el.scrollTop = el.scrollHeight;
+}
+
+async function sendChat() {
+    const inp = document.getElementById('chat-input');
+    const content = inp.value.trim();
+    if (!content) return;
+    inp.value = '';
+    await api('/api/chat', { method: 'POST', body: JSON.stringify({ content }) });
+    renderChat();
+}
+
+// --- Polling ---
+async function pollData() {
+    if (!S.user) return;
+    try {
+        // Inbox count
+        const unread = await api('/api/inbox/unread');
+        const badge = document.getElementById('inbox-badge');
+        badge.textContent = unread.count;
+        badge.style.display = unread.count > 0 ? 'inline' : 'none';
+        document.getElementById('dash-msgs').textContent = unread.count;
+
+        // Announcements
+        const latest = await api('/api/announcements/latest');
+        if (latest && latest.id) {
+            if (!S.lastAnnAt) S.lastAnnAt = latest.created_at;
+            else if (latest.created_at > S.lastAnnAt) {
+                S.lastAnnAt = latest.created_at;
+                showAnnBanner(latest);
             }
         }
 
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `glass p-4 rounded-xl border-l-4 mb-3 flex items-center gap-3 animate-fadeIn min-w-[300px] shadow-2xl`;
-            const clr = type === 'error' ? 'border-red-500 text-red-400' : 'border-green-500 text-green-400';
-            toast.classList.add(...clr.split(' '));
-            toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5"></i><div class="text-sm font-medium">${message}</div>`;
-            container.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 6000);
-        }
+        if (S.activeTab === 'chat') renderChat();
+    } catch(e) {}
+}
 
-        // --- Initialization ---
+// --- Utils ---
+function switchAuthTab(tab) {
+    document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+    document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+}
 
-        async function init() {
-            // טעינת פרופיל משתמש
-            try {
-                const profile = await api('/api/me');
-                if (profile) {
-                    state.currentUser = profile;
-                    document.getElementById('my-username').textContent = profile.username;
-                    document.getElementById('my-role').textContent = `@${profile.role || 'operator'}`;
-                    if (profile.verified === 1) {
-                        document.getElementById('my-verified-badge').innerHTML = '<span class="verified-badge"><i data-lucide="check"></i></span>';
-                    }
-                }
-            } catch (e) {}
+function openModal(name) { document.getElementById('modal-' + name).classList.add('open'); }
+function closeModal(name) { document.getElementById('modal-' + name).classList.remove('open'); }
 
-            // הגדרת פולינג
-            Object.values(state.pollingIntervals).forEach(clearInterval);
-            
-            state.pollingIntervals.chat = setInterval(() => { if(state.activeTab === 'chat' && !state.demoMode) renderChat(); }, 5000);
-            state.pollingIntervals.sync = setInterval(async () => {
-                if(!state.demoMode) {
-                    if(state.activeTab === 'dashboard') await renderDashboard();
-                    if(state.activeTab === 'news') await renderNews();
-                }
-            }, 15000);
+function showAnnBanner(ann) {
+    document.getElementById('ann-banner-title').textContent = ann.title;
+    document.getElementById('ann-banner-body').textContent = ann.content;
+    document.getElementById('ann-banner').style.display = 'block';
+    setTimeout(() => { document.getElementById('ann-banner').style.display = 'none'; }, 6000);
+}
 
-            // עדכון שעון
-            setInterval(() => {
-                document.getElementById('server-time').textContent = new Date().toISOString().substr(11, 8);
-            }, 1000);
+function dismissBanner() { document.getElementById('ann-banner').style.display = 'none'; }
 
-            // טעינת טאב התחלתי
-            await switchTab('dashboard');
-        }
+function showToast(title, body) {
+    document.getElementById('toast-title').textContent = title;
+    document.getElementById('toast-body').textContent = body;
+    document.getElementById('toast').style.display = 'block';
+    setTimeout(() => { document.getElementById('toast').style.display = 'none'; }, 4000);
+}
 
-        window.onload = init;
+function saveApiUrl() {
+    const v = document.getElementById('api-url-in').value;
+    API_BASE = v;
+    localStorage.setItem('api_base', v);
+    showToast('הצלחה', 'כתובת השרת עודכנה');
+    location.reload();
+}
 
-    </script>
+async function createCase() {
+    const name = document.getElementById('nc-name').value;
+    const platform = document.getElementById('nc-plat').value;
+    const risk_level = document.getElementById('nc-risk').value;
+    const notes = document.getElementById('nc-notes').value;
+    await api('/api/cases', { method: 'POST', body: JSON.stringify({ name, platform, risk_level, notes }) });
+    closeModal('new-case');
+    renderCases();
+    renderDashboard();
+}
+
+async function createAnnouncement() {
+    const title = document.getElementById('ann-title').value;
+    const content = document.getElementById('ann-content').value;
+    await api('/api/announcements', { method: 'POST', body: JSON.stringify({ title, content }) });
+    closeModal('new-ann');
+    renderNews();
+}
+
+async function initNexus() {
+    const data = await api('/api/graph').catch(() => ({ nodes: [], edges: [] }));
+    cytoscape({
+        container: document.getElementById('cy'),
+        elements: [...data.nodes, ...data.edges],
+        style: [
+            { selector: 'node', style: { 'label': 'data(label)', 'background-color': '#38bdf8', 'color': '#fff', 'font-size': '10px', 'text-valign': 'center', 'width': 50, 'height': 50 } },
+            { selector: 'edge', style: { 'width': 2, 'line-color': '#484f58', 'curve-style': 'bezier', 'target-arrow-shape': 'triangle' } }
+        ],
+        layout: { name: 'cose' }
+    });
+}
+function reloadGraph() { initNexus(); }
+
+// Log feed animation
+function addLog(msg) {
+    const feed = document.getElementById('log-feed');
+    const span = document.createElement('span');
+    span.textContent = `> ${new Date().toLocaleTimeString()} ${msg}`;
+    feed.prepend(span);
+    if (feed.children.length > 5) feed.lastChild.remove();
+}
+
+// Particles setup
+function startParticles() {
+    const c = document.getElementById('bg-canvas');
+    if(!c) return;
+    const ctx = c.getContext('2d');
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    const pts = Array.from({length: 40}, () => ({ x: Math.random()*c.width, y: Math.random()*c.height, vx: Math.random()-0.5, vy: Math.random()-0.5 }));
+    function frame() {
+        ctx.clearRect(0,0,c.width,c.height);
+        ctx.fillStyle = "rgba(0, 212, 170, 0.2)";
+        pts.forEach(p => {
+            ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+            p.x += p.vx; p.y += p.vy;
+            if(p.x<0||p.x>c.width) p.vx*=-1; if(p.y<0||p.y>c.height) p.vy*=-1;
+        });
+        requestAnimationFrame(frame);
+    }
+    frame();
+}
+
+// Clock
+setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('he-IL', {hour12: false}); }, 1000);
+
+window.onload = () => {
+    startParticles();
+    tryAutoLogin();
+};
+</script>
 </body>
 </html>
