@@ -3,162 +3,176 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>SMAI Sentinel Command</title>
+  <title>SMAI Sentinel | Command Center v2.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
-  <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 
   <style>
-    :root {
-      --g: #00d4aa; --b: #38bdf8; --r: #fb7185; --y: #fbbf24; --p: #a78bfa;
-      --bg: #0d1117; --card: #161b22; --border: #30363d;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; background: var(--bg); color: #c9d1d9;
-      font-family: 'Rubik', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column;
-    }
-    .mono { font-family: 'JetBrains Mono', monospace; }
+    :root { --g: #00d4aa; --bg: #0d1117; --card: #161b22; --border: #30363d; }
+    body { background: var(--bg); color: #c9d1d9; font-family: 'Rubik', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
     .glass { background: rgba(22, 27, 34, 0.8); backdrop-filter: blur(12px); border: 1px solid var(--border); }
-    .btn-g { background: var(--g); color: #000; font-weight: 600; transition: all 0.2s; }
-    .btn-g:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3); }
-    input, select, textarea {
-      background: #0d1117; border: 1px solid var(--border); border-radius: 6px;
-      padding: 0.5rem 0.75rem; color: white; outline: none;
-    }
-    input:focus { border-color: var(--g); box-shadow: 0 0 0 1px var(--g); }
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-      display: none; align-items: center; justify-content: center; z-index: 100;
-    }
-    .modal-overlay.open { display: flex; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    .nav-btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; transition: all 0.2s; color: #8b949e; cursor: pointer; }
+    .nav-btn:hover { background: rgba(0, 212, 170, 0.1); color: var(--g); }
+    .nav-btn.active { background: var(--g); color: #000; font-weight: 700; }
+    .pane { display: none; height: 100%; overflow-y: auto; }
+    .pane.active { display: block; }
+    #nexus-canvas { width: 100%; height: 600px; background: #05070a; border-radius: 16px; border: 1px solid var(--border); }
+    .mono { font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
 <body>
 
 <div id="view-login" class="fixed inset-0 z-[200] bg-[#0d1117] flex items-center justify-center p-4">
-  <div class="w-full max-w-md space-y-8 animate-in fade-in zoom-in duration-500">
-    <div class="text-center">
-      <div class="inline-flex p-4 rounded-2xl bg-teal-500/10 border border-teal-500/20 mb-4">
-        <i data-lucide="shield" class="w-12 h-12 text-[#00d4aa]"></i>
-      </div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-2">SMAI Sentinel</h1>
-      <p class="text-gray-400">Command Center v2.1</p>
-    </div>
-    <div class="glass p-8 rounded-2xl space-y-6">
-      <div id="login-err" class="hidden p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm text-center"></div>
-      <div class="space-y-4">
-        <div class="space-y-2">
-          <label class="text-sm font-medium text-gray-300">אימייל</label>
-          <input type="email" id="login-email" class="w-full" placeholder="name@example.com"/>
-        </div>
-        <div class="space-y-2">
-          <label class="text-sm font-medium text-gray-300">סיסמה</label>
-          <input type="password" id="login-pass" class="w-full" placeholder="••••••••"/>
-        </div>
-      </div>
-      <button onclick="doLogin()" class="w-full btn-g py-3 rounded-xl flex items-center justify-center gap-2">
-        <span>התחברות למערכת</span>
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-      </button>
+  <div class="w-full max-w-md glass p-10 rounded-3xl space-y-8 text-center animate-in fade-in duration-700">
+    <i data-lucide="shield-check" class="w-16 h-16 text-[#00d4aa] mx-auto"></i>
+    <h1 class="text-3xl font-bold text-white tracking-tighter">SMAI SENTINEL</h1>
+    <div class="space-y-4">
+      <input type="email" id="login-email" class="w-full bg-black border border-gray-700 p-4 rounded-xl" placeholder="Email"/>
+      <input type="password" id="login-pass" class="w-full bg-black border border-gray-700 p-4 rounded-xl" placeholder="Password"/>
+      <button onclick="doLogin()" class="w-full bg-[#00d4aa] text-black py-4 rounded-xl font-bold text-lg hover:shadow-[0_0_20px_rgba(0,212,170,0.4)] transition-all">התחברות מאובטחת</button>
     </div>
   </div>
 </div>
 
-<div id="view-app" class="hidden flex-1 flex flex-col h-full">
-  <header class="h-16 glass border-t-0 border-x-0 flex items-center justify-between px-6 z-50">
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2">
-        <i data-lucide="terminal" class="w-5 h-5 text-[#00d4aa]"></i>
-        <span class="font-bold text-white tracking-wider">SENTINEL</span>
-      </div>
-      <div class="h-4 w-[1px] bg-gray-800"></div>
-      <div id="user-badge" class="flex items-center gap-2 text-sm bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700">
-        </div>
+<div id="view-app" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+  <header class="h-16 glass flex items-center justify-between px-8 z-50">
+    <div class="flex items-center gap-4 text-white font-bold tracking-widest uppercase">
+      <i data-lucide="activity" class="text-[#00d4aa]"></i> SENTINEL ✔️
     </div>
-    <button onclick="logout()" class="p-2 hover:bg-rose-500/10 hover:text-rose-400 rounded-lg transition-colors">
-      <i data-lucide="log-out" class="w-5 h-5"></i>
-    </button>
+    <div id="user-info" class="flex items-center gap-4">
+      <span id="user-name" class="text-sm font-medium"></span>
+      <button onclick="logout()" class="text-rose-500 hover:bg-rose-500/10 p-2 rounded-lg"><i data-lucide="power"></i></button>
+    </div>
   </header>
 
   <div class="flex-1 flex overflow-hidden">
-    <aside class="w-64 glass border-y-0 border-r-0 p-4 space-y-2 hidden lg:block">
-      <button onclick="setTab('dashboard')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white transition-all">
-        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-        <span class="font-medium">לוח בקרה</span>
-      </button>
-      <button onclick="setTab('cases')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white transition-all">
-        <i data-lucide="folder-search" class="w-5 h-5"></i>
-        <span class="font-medium">תיקי חקירה</span>
-      </button>
-      <button onclick="setTab('nexus')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white transition-all">
-        <i data-lucide="share-2" class="w-5 h-5"></i>
-        <span class="font-medium">Nexus Graph</span>
-      </button>
+    <aside class="w-72 glass p-5 space-y-2 overflow-y-auto hidden lg:block">
+      <div onclick="setTab('dashboard')" class="nav-btn active" id="btn-dashboard"><i data-lucide="layout-grid"></i><span>לוח בקרה</span></div>
+      <div onclick="setTab('cases')" class="nav-btn" id="btn-cases"><i data-lucide="briefcase"></i><span>תיקי חקירה</span></div>
+      <div onclick="setTab('nexus')" class="nav-btn" id="btn-nexus"><i data-lucide="share-2"></i><span>גרף קשרים (Nexus)</span></div>
+      <div onclick="setTab('osint')" class="nav-btn" id="btn-osint"><i data-lucide="radar"></i><span>כלי סריקה (Scanner)</span></div>
+      <div class="h-[1px] bg-gray-800 my-4"></div>
+      <div onclick="setTab('chat')" class="nav-btn" id="btn-chat"><i data-lucide="message-circle"></i><span>צ'אט מבצעי</span></div>
+      <div onclick="setTab('users')" class="nav-btn" id="btn-users"><i data-lucide="shield-alert"></i><span>ניהול משתמשים</span></div>
     </aside>
 
-    <main id="main-scroll" class="flex-1 overflow-y-auto p-6 space-y-6">
-       <div id="tab-content" class="max-w-7xl mx-auto"></div>
+    <main class="flex-1 p-8 overflow-hidden relative">
+      
+      <div id="pane-dashboard" class="pane active space-y-8">
+        <h2 class="text-4xl font-bold text-white">System Overview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="stats-container">
+           </div>
+      </div>
+
+      <div id="pane-cases" class="pane space-y-6">
+        <div class="flex justify-between items-center">
+          <h2 class="text-4xl font-bold text-white">תיקי חקירה</h2>
+          <button onclick="openNewCase()" class="bg-[#00d4aa] text-black px-6 py-3 rounded-xl font-bold">+ פתח תיק חדש</button>
+        </div>
+        <div id="cases-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+      </div>
+
+      <div id="pane-nexus" class="pane space-y-6">
+        <h2 class="text-4xl font-bold text-white">The Nexus Graph</h2>
+        <div id="nexus-canvas" class="shadow-2xl"></div>
+      </div>
+
+      <div id="pane-osint" class="pane space-y-6">
+        <h2 class="text-4xl font-bold text-white">OSINT Intelligence</h2>
+        <div class="glass p-8 rounded-3xl space-y-4">
+          <label class="block text-gray-400">הזן מזהה משתמש (Roblox/Discord)</label>
+          <div class="flex gap-4">
+            <input id="scan-input" class="flex-1 bg-black border border-gray-700 p-4 rounded-xl" placeholder="User ID..."/>
+            <button onclick="startScan()" class="bg-blue-500 text-white px-8 rounded-xl font-bold">סרוק</button>
+          </div>
+          <div id="scan-results" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+      </div>
+
     </main>
   </div>
 </div>
 
 <script>
-  // ── LOGIC & API ─────────────────────────────────────────────────────────────
-  let S = { user: null, token: null, tab: 'dashboard' };
+  let S = { user: null, cy: null };
 
-  /* התיקון הקריטי: כתובות יחסיות בשביל Render */
-  async function api(url, opt = {}) {
+  // פונקציית API חכמה לכל מכשיר
+  async function api(path, opts={}) {
     const token = localStorage.getItem('smai_token');
-    opt.headers = { ...opt.headers, 'Content-Type': 'application/json' };
-    if (token) opt.headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await fetch(url, opt);
-    if (res.status === 401) { logout(); throw 'Unauthorized'; }
-    if (!res.ok) { const e = await res.json(); throw e.detail || 'Error'; }
+    const res = await fetch(path, {
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      ...opts
+    });
+    if (res.status === 401) logout();
     return res.json();
+  }
+
+  function setTab(tid) {
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`pane-${tid}`).classList.add('active');
+    document.getElementById(`btn-${tid}`).classList.add('active');
+    
+    if (tid === 'cases') loadCases();
+    if (tid === 'nexus') initNexus();
+    if (tid === 'dashboard') loadStats();
+  }
+
+  async function loadCases() {
+    const grid = document.getElementById('cases-grid');
+    grid.innerHTML = '<div class="text-teal-500 animate-pulse">מושך נתונים מהשרת...</div>';
+    const cases = await api('/api/cases');
+    grid.innerHTML = cases.map(c => `
+      <div class="glass p-6 rounded-3xl border-r-8 border-teal-500 hover:scale-105 transition-all">
+        <div class="flex justify-between items-start mb-4">
+          <h3 class="text-xl font-bold text-white">${c.name}</h3>
+          <span class="px-2 py-1 bg-teal-500/10 text-teal-400 text-xs rounded uppercase font-bold">${c.risk_level} Risk</span>
+        </div>
+        <p class="text-sm text-gray-400 line-clamp-2 mb-4">${c.notes || 'אין הערות נוספות לתיק זה'}</p>
+        <div class="flex justify-between items-center">
+          <span class="text-xs mono text-gray-500">${c.platform}</span>
+          <button class="text-[#00d4aa] text-sm font-bold">צפה בתיק ></button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function initNexus() {
+    const data = await api('/api/nexus');
+    S.cy = cytoscape({
+      container: document.getElementById('nexus-canvas'),
+      elements: data,
+      style: [
+        { selector: 'node', style: { 'background-color': '#00d4aa', 'label': 'data(label)', 'color': '#fff', 'font-size': '10px' } },
+        { selector: 'edge', style: { 'width': 2, 'line-color': '#30363d', 'target-arrow-color': '#30363d', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '8px', 'color': '#8b949e' } }
+      ],
+      layout: { name: 'cose', animate: true }
+    });
   }
 
   async function doLogin() {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-pass').value;
-    const err = document.getElementById('login-err');
-    
-    try {
-      const data = await api('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-      });
-      localStorage.setItem('smai_token', data.token);
-      localStorage.setItem('smai_user', JSON.stringify(data.user));
+    const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    if (res.token) {
+      localStorage.setItem('smai_token', res.token);
+      localStorage.setItem('smai_user', JSON.stringify(res.user));
       location.reload();
-    } catch (e) {
-      err.innerText = e;
-      err.classList.remove('hidden');
-    }
+    } else { alert("גישה נדחתה"); }
   }
 
-  function logout() {
-    localStorage.clear();
-    location.reload();
-  }
+  function logout() { localStorage.clear(); location.reload(); }
 
-  // אתחול דף
   window.onload = () => {
-    const savedUser = localStorage.getItem('smai_user');
-    if (savedUser) {
-      S.user = JSON.parse(savedUser);
-      document.getElementById('view-login').classList.add('hidden');
+    const user = localStorage.getItem('smai_user');
+    if (user) {
+      S.user = JSON.parse(user);
+      document.getElementById('view-login').style.display = 'none';
       document.getElementById('view-app').classList.remove('hidden');
-      document.getElementById('user-badge').innerHTML = `
-        <span class="text-white font-medium">${S.user.display_name}</span>
-        ${S.user.verified ? '<i data-lucide="badge-check" class="w-4 h-4 text-sky-400 fill-sky-400/20"></i>' : ''}
-      `;
-      lucide.createIcons();
-      // כאן תטען את שאר הפונקציות של התיקים והגרפים שלך
+      document.getElementById('user-name').innerText = S.user.display_name;
+      setTab('dashboard');
     }
     lucide.createIcons();
   };
